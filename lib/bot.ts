@@ -136,6 +136,7 @@ bot.command("register", (ctx) => {
         countMeetings: 0,
         meetings: [], 
     };  
+    states[tgId] = UserState.REGISTRATION_INPUT_NAME;
     ctx.reply("Как вас зовут?");  
 });  
 
