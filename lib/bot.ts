@@ -1,41 +1,43 @@
-import { Bot, Context } from "https://deno.land/x/grammy@v1.34.0/mod.ts"; 
+import { Bot, Context } from "https://deno.land/x/grammy@v1.34.0/mod.ts";
 
-// Создайте экземпляр класса `Bot` и передайте ему токен вашего бота.  
-export const bot = new Bot(Deno.env.get("BOT_TOKEN") || ""); // Убедитесь, что токен установлен  
+export const bot = new Bot(Deno.env.get("BOT_TOKEN") || "");
 
-// Состояние пользователя  
-type Topic  = {[id: string]: { id: string; createdAt: Date; title: string; meetingId: string; }} ;
-type UserMeeting = {[id: string]: { userId: string; meetingId: string}};
-type Meeting ={[id: string]: {createdAt: Date; title : string; date: Date; place: string; meetings : Array<UserMeeting>; topics: Array<Topic>}}
-//type Place = {[id: string]: {name : string; adress : string; meeting: Array<Meeting>}};
+// Типы данных
+type Topic = { [id: string]: { id: string; createdAt: Date; title: string; meetingId: string } };
+type UserMeeting = { [id: string]: { userId: string; meetingId: string } };
+type Meeting = {
+    [id: string]: {
+        createdAt: Date;
+        title: string;
+        date: Date;
+        place: string;
+        meetings: Array<UserMeeting>;
+        topics: Array<Topic>;
+    };
+};
+
 type User = {
-    name: string,
-    age: number,
-    city: string,
-    telegramId: string,
-    telegramUsername: string,
-    networkingPoints: number,
-    meetings: Array<Meeting>}
-  
+    name: string;
+    age: number;
+    city: string;
+    telegramId: string;
+    telegramUsername: string;
+    networkingPoints: number;
+    meetings: Array<Meeting>;
+};
 
-//const topic: Topic = {}; // Темы встречи
-//const userMeeting: UserMeeting  = {}; // Оценки пользователей по встречам
-//const meeting: Meeting = {}; // Описание встречи
-//const place : Place ={}
-
+// Состояния пользователя
 enum UserState {
     REGISTRATION_INPUT_NAME,
     REGISTRATION_INPUT_AGE,
     REGISTRATION_INPUT_CITY,
-};
-const states: Record<string, UserState> = {
-    // ...
-  }
-  
-const users: Record<string, User> = {
-    // ...
-  }
-  const stateHandlers: Record<UserState, (ctx: Context) => Promise<void>> = {
+}
+
+const users: Record<string, User> = {}; // Хранение всех зарегистрированных пользователей
+const states: Record<string, UserState> = {}; // Состояния пользователей
+
+// Обработчики состояний
+const stateHandlers: Record<UserState, (ctx: Context) => Promise<void>> = {
     [UserState.REGISTRATION_INPUT_NAME]: async (ctx) => {
         const name = ctx.message?.text;
         const tgId = ctx.from?.id.toString();
@@ -108,109 +110,33 @@ const handleMessage = async (ctx: Context) => {
     }
 };
 
-// Функция для оценки встречи  
-
-// Команды для регистрации  
-bot.command("start", (ctx) => {  
-    ctx.reply("Добро пожаловать! Чтобы начать регистрацию, введите /register.");  
-});  
-
-
-
-bot.command("register", (ctx) => {
-  const tgId = ctx.from?.id.toString();
-  if (tgId) {
-      states[tgId] = UserState.REGISTRATION_INPUT_NAME;
-      ctx.reply("Как вас зовут?");
-  }
+// Команды для регистрации
+bot.command("start", (ctx) => {
+    ctx.reply("Добро пожаловать! Чтобы начать регистрацию, введите /register.");
 });
 
+bot.command("register", (ctx) => {
+    const tgId = ctx.from?.id.toString();
+    if (tgId) {
+        states[tgId] = UserState.REGISTRATION_INPUT_NAME;
+
+        // Инициализация пользователя
+        users[tgId] = {
+            name: "",
+            age: 0,
+            city: "",
+            telegramId: tgId,
+            telegramUsername: ctx.from?.username || "Аноним",
+            networkingPoints: 0,
+            meetings: [],
+        };
+
+        ctx.reply("Как вас зовут?");
+    }
+});
+
+// Обработка сообщений
 bot.on("message", handleMessage);
- 
-    
 
-
-        /*// Ищем совпадения после регистрации  
-        await findMatches(userId);  
-    } else if (state?.waitingForResponse) {  
-        const otherUserId = state.otherUserId!;  
-        
-        if (ctx.message.text.toLowerCase() === "да") {  
-            await bot.api.sendMessage(otherUserId, `Пользователь ${userId} согласен на встречу!`);  
-            await bot.api.sendMessage(userId, `Пользователь ${otherUserId} согласен на встречу! Договоритесь с ним о точном времени и месте.`);  
-
-            // Запрос на оценку встречи для обоих пользователей  
-            await assessment(userId);  
-            await assessment(otherUserId);  
-                } else if (ctx.message.text.toLowerCase() === "нет") {  
-            await bot.api.sendMessage(otherUserId, `Пользователь ${userId} не заинтересован в встрече.`);  
-            await ctx.reply("Хорошо, если вы передумаете, просто дайте знать!");  
-        } else {  
-            await ctx.reply('Пожалуйста, ответьте "Да" или "Нет".');  
-        }  
-    } else if (state?.waitingForResponse) {  
-        // Обработка оценки, если пользователь находится в состоянии ожидания  
-        const answer = parseInt(ctx.message.text);  
-        if (!isNaN(answer) && answer >= 1 && answer <= 10) {  
-            state.grade.push(answer);  
-            await bot.api.sendMessage(userId, `Спасибо за вашу оценку: ${answer}`);  
-            state.waitingForResponse = false; // Завершаем ожидание ответа для этого пользователя  
-
-            // Проверяем, оценил ли другой пользователь  
-            const otherUserId = state.otherUserId!;  
-            const otherState = userState[otherUserId];  
-            if (otherState?.waitingForResponse) {  
-                await bot.api.sendMessage(otherUserId, `Пользователь ${userId} оценил встречу: ${answer}`);  
-                otherState.waitingForResponse = false; // Завершаем ожидание ответа для другого пользователя  
-            }  
-        } else {  
-            await ctx.reply('Пожалуйста, введите число от 1 до 10.');  
-        }  
-    } else {  
-        ctx.reply("Я не знаю, как на это ответить. Пожалуйста, используйте команду /register для начала.");  
-    }  
-});  
-
-// Функция для поиска совпадений  
-async function findMatches(userId: string) {  
-    const user = users[userId];  
-    for (const [otherUserId, otherUser] of Object.entries(users)) {  
-        if (otherUserId !== userId) {  
-            // Проверяем совпадения по интересам, месту, кафе и времени  
-            const isMatch = user.hobby.split(',').some(hobby => otherUser.hobby.includes(hobby.trim())) &&  
-                            user.place === otherUser.place &&  
-                            user.cafe === otherUser.cafe &&  
-                            user.time === otherUser.time;  
-
-            if (isMatch) {  
-                // Уведомляем обоих пользователей о совпадении  
-                await bot.api.sendMessage(userId,  
-                    `У вас совпадение с пользователем ${otherUserId}!\n` +  
-                    `- Хобби: ${otherUser.hobby}\n` +  
-                    `- Район: ${otherUser.place}\n` +  
-                    `- Кафе: ${otherUser.cafe}\n` +  
-                    `- Время: ${otherUser.time}\n\n` +  
-                    `Хотите встретиться? Ответьте "Да" или "Нет".`  
-                );  
-
-                await bot.api.sendMessage(otherUserId,  
-                    `У вас совпадение с пользователем ${userId}!\n` +  
-                    `- Хобби: ${user.hobby}\n` +  
-                    `- Район: ${user.place}\n` +  
-                    `- Кафе: ${user.cafe}\n` +  
-                    `- Время: ${user.time}\n\n` +  
-                    `Хотите встретиться? Ответьте "Да" или "Нет".`  
-                );  
-
-                // Устанавливаем состояние ожидания ответа  
-                userState[userId].waitingForResponse = true;  
-                userState[userId].otherUserId = otherUserId;  
-                userState[otherUserId].waitingForResponse = true;  
-                userState[otherUserId].otherUserId = userId;  
-            }  
-        }  
-    }  
-}  
-*/
-// Запуск бота  
-await bot.start();
+// Запуск бота
+bot.start();
