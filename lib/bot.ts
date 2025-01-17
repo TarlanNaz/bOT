@@ -117,6 +117,24 @@ const users: Record<string, User> = {
 
 // Основная логика обработки сообщений
 const handleMessage = async (ctx: Context) => {
+  const tgId = ctx.from?.id.toString();
+  if (!tgId) return;
+
+  console.log(`Обработка сообщения от пользователя ${tgId}`);
+
+  const currentState = states[tgId];
+  console.log(`Текущее состояние пользователя: ${currentState}`);
+
+  const handler = stateHandlers[currentState];
+  if (handler) {
+      console.log(`Вызов обработчика для состояния: ${currentState}`);
+      await handler(ctx);
+  } else {
+      console.log("Состояние не определено. Запрос на /start.");
+      await ctx.reply("Пожалуйста, начните с команды /start.");
+  }
+};
+/*const handleMessage = async (ctx: Context) => {
     const tgId = ctx.from?.id.toString();
     if (!tgId) return;
 
@@ -129,6 +147,7 @@ const handleMessage = async (ctx: Context) => {
         await ctx.reply("Пожалуйста, начните с команды /start.");
     }
 };
+*/
 // Функция для оценки встречи  
 
 // Команды для регистрации  
