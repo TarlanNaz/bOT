@@ -139,7 +139,7 @@ bot.command("register", (ctx) => {
     ctx.reply("Как вас зовут?");  
 });  
 
-bot.on("message", stateHandlers) 
+bot.on("message", handleMessage) 
     
 
 
