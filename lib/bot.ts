@@ -145,7 +145,7 @@ bot.command("register", (ctx) => {
   }
 });
 
-bot.on("message", handleMessage) 
+bot.on("message", handleMessage);
     
 
 
