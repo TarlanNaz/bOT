@@ -1,5 +1,5 @@
-import { Bot, Context } from "https://deno.land/x/grammy@v1.32.0/mod.ts"; 
-//import { Context } from "https://deno.land/x/grammy@v1.32.0/mod.ts"; 
+import { Bot, Context } from "https://deno.land/x/grammy@v1.34.0/mod.ts"; 
+import { Context } from "https://deno.land/x/grammy@v1.32.0/mod.ts"; 
 
 // Создайте экземпляр класса `Bot` и передайте ему токен вашего бота.  
 export const bot = new Bot(Deno.env.get("BOT_TOKEN") || ""); // Убедитесь, что токен установлен  
